@@ -7,11 +7,17 @@
   "type": "commonjs",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "zoho-to-s3": "node ./ZohoToS3/index.js"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.946.0",
     "@aws-sdk/s3-request-presigner": "^3.946.0",
-    "dotenv": "^17.2.3"
+    "axios": "^1.13.2",
+    "csv-writer": "^1.6.0",
+    "dotenv": "^17.2.3",
+    "fs": "^0.0.1-security",
+    "path": "^0.12.7",
+    "xlsx": "^0.18.5"
   }
 }
