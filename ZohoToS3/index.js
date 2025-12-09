@@ -1,48 +1,67 @@
-const fs = require("fs");
-const path = require("path");
+const {S3Client, GetObjectCommand, PutObjectCommand} = require('@aws-sdk/client-s3');
+const {getSignedUrl} = require('@aws-sdk/s3-request-presigner');
+const fs = require('fs');
 
-// ---------------- CLEAN ZOHO PATH ----------------
-function cleanZohoPath(p) {
-    if (!p) return "";
+try {
+    require('dotenv').config();
+} catch {}
 
-    // Split by backslash
-    const parts = p.split("\\");
+const accessKeyId = process.env.AWS_ACCESS_KEY_ID || process.env.AWS_ACCESS_KEY;
+const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY || process.env.AWS_SECRET_KEY;
+const region = process.env.AWS_REGION || 'eu-north-1';
 
-    // Remove first 3 segments (Z:, General, date/folder/etc.)
-    const cleaned = parts.slice(3).join("\\");
+const s3Client = new S3Client({
+    region,
+    credentials: {
+        accessKeyId,
+        secretAccessKey,
+    },
+});
 
-    // Add leading slash
-    return "\\" + cleaned;
+async function getObject(key){
+    const command = new GetObjectCommand({
+        Bucket: process.env.AWS_BUCKET_NAME,
+        Key: key,
+    })
+    const url = await getSignedUrl(s3Client, command, {expiresIn: 3600});
+    return url;
 }
 
-// ---------------- CLEAN S3 PATH ----------------
-function cleanS3Path(p) {
-    if (!p) return "";
-
-    // Remove s3/ or S3/
-    return p.replace(/^s3\//i, "");
+// get presigned URL for frontend/postman upload PUT
+async function getPutUrl(key, contentType){
+    const command = new PutObjectCommand({
+        Bucket: process.env.AWS_BUCKET_NAME,
+        Key: key,
+        ContentType: contentType,
+    });
+    const url = await getSignedUrl(s3Client, command, {expiresIn: 3600});
+    return url;
 }
 
-// ---------------- MAIN SCRIPT ----------------
-function cleanCSV(inputFile, outputFile) {
-    const file = fs.readFileSync(inputFile, "utf8").trim();
-    const lines = file.split("\n");
-
-    // Header stays same
-    let output = [lines[0]];
-
-    for (let i = 1; i < lines.length; i++) {
-        let [zoho, s3] = lines[i].split(",");
-
-        const newZoho = cleanZohoPath(zoho);
-        const newS3   = cleanS3Path(s3);
-
-        output.push(`${newZoho},${newS3}`);
-    }
-
-    fs.writeFileSync(outputFile, output.join("\n"));
-    console.log("✔ CSV cleaned and saved to:", outputFile);
+// Upload a local file directly(server side upload)
+async function putObjectFromFile(key, filePath, contentType){
+    const body = fs.readFileSync(filePath);
+    const command = new PutObjectCommand({
+        Bucket: process.env.AWS_BUCKET_NAME,
+        Key: key,
+        Body: body,
+        ContentType: contentType,
+    });
+    await s3Client.send(command);
+    return `s3://${process.env.AWS_BUCKET_NAME}/${key}`;
 }
 
-// ---------------- RUN ----------------
-cleanCSV("input.csv", "cleaned.csv");
+async function init(){
+    console.log('Starting S3 utils...');
+    // console.log("GET OBJECT URL:", await getObject('Auralis_pitchdeck.pdf'));
+    
+    // Example: generate presigned URL for client-side PUT
+    // console.log("URL FROM PUT OBJECT:", await getPutUrl('images/sujay/trial.txt', 'text/plain'));
+
+    // Example: upload local file directly (no presigned URL)
+    const location = await putObjectFromFile('images/sujay/triaL.txt', './trial.txt', 'text/plain');
+    console.log('Uploaded to:', location);
+}
+
+
+init();
