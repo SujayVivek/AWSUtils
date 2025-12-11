@@ -9,9 +9,9 @@ require('dotenv').config({ path: path.resolve(__dirname, '..', '.env') });
 // AWS config
 const accessKeyId = process.env.AWS_ACCESS_KEY_ID || process.env.AWS_ACCESS_KEY;
 const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY || process.env.AWS_SECRET_KEY;
-const region = process.env.AWS_REGION || 'eu-north-1';
+const region = process.env.AWS_REGION || 'us-east-1';
 // Bucket overridden by user instruction
-const BUCKET = process.env.AWS_BUCKET_NAME || 'rules-repostory';
+const BUCKET = process.env.AWS_BUCKET_NAME || 'dummy-bucket12340901';
 
 const s3 = new S3Client({
   region,
@@ -19,7 +19,7 @@ const s3 = new S3Client({
 });
 
 // Prefix drive for local files
-const LOCAL_PREFIX = process.env.LOCAL_PREFIX || "F:\\04-12-2025"; // e.g., F:\
+const LOCAL_PREFIX = process.env.LOCAL_PREFIX || "F:\\02-12-2025"; // e.g., F:\
 
 // Helpers
 function csvIter(filePath) {

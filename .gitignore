@@ -4,3 +4,4 @@ node_modules
 ZohoToS3/downloads
 ZohoToS3/cleaned.csv
 ZohoToS3/input.csv
+CRUD_S3/s3_export.xlsx
