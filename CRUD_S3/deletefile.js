@@ -21,12 +21,22 @@ const s3 = new S3Client({
 	credentials: { accessKeyId, secretAccessKey },
 });
 
+function normalizePrefix(dir) {
+	if (!dir) return undefined;
+	let p = String(dir).replace(/\\/g, '/');
+	p = p.replace(/^\/+/, '');
+	if (p && !p.endsWith('/')) p += '/';
+	return p || undefined;
+}
+
 function parseEnv() {
 	const dryRun = process.env.DRY_RUN === 'true';
 
 	const bucket = process.env.AWS_BUCKET_NAME;
 	const startDateStr = process.env.START_DATE;
 	const endDateStr = process.env.END_DATE;
+	const directoryEnv = process.env.DIRECTORY;
+	const prefix = normalizePrefix(directoryEnv);
 
 	if (!bucket) {
 		throw new Error('Bucket name is required via env AWS_BUCKET_NAME');
@@ -53,22 +63,23 @@ function parseEnv() {
 		end.setHours(23, 59, 59, 999);
 	}
 
-	return { bucket, start, end, dryRun };
+	return { bucket, start, end, dryRun, prefix };
 }
 
-async function collectKeysInDateRange(bucket, start, end) {
+async function collectKeysInDateRange(bucket, start, end, prefix) {
 	let ContinuationToken = undefined;
 	const keysToDelete = [];
 	let scanned = 0;
 
-	console.log(`Scanning bucket "${bucket}" for objects between ${start.toISOString()} and ${end.toISOString()}...`);
+	console.log(`Scanning bucket "${bucket}" ${prefix ? `under "${prefix}" ` : ''}for objects between ${start.toISOString()} and ${end.toISOString()}...`);
 
-	do {
-		const resp = await s3.send(new ListObjectsV2Command({
-			Bucket: bucket,
-			ContinuationToken,
-			MaxKeys: 2000,
-		}));
+		do {
+			const resp = await s3.send(new ListObjectsV2Command({
+				Bucket: bucket,
+				ContinuationToken,
+				MaxKeys: 2000,
+				Prefix: prefix,
+			}));
 
 		const contents = resp.Contents || [];
 		for (const obj of contents) {
@@ -159,10 +170,10 @@ async function deleteInBatches(bucket, objects, dryRun) {
 
 async function main() {
 	try {
-		const { bucket, start, end, dryRun } = parseEnv();
-		console.log(`Region: ${region}. Bucket: ${bucket}. DryRun: ${dryRun ? 'ON' : 'OFF'}`);
+		const { bucket, start, end, dryRun, prefix } = parseEnv();
+		console.log(`Region: ${region}. Bucket: ${bucket}. Prefix: ${prefix || '(none)'} . DryRun: ${dryRun ? 'ON' : 'OFF'}`);
 
-		const candidates = await collectKeysInDateRange(bucket, start, end);
+		const candidates = await collectKeysInDateRange(bucket, start, end, prefix);
 
 		const { deleted, errors } = await deleteInBatches(bucket, candidates, dryRun);
 		console.log('Summary:');
@@ -182,6 +193,7 @@ async function main() {
 		console.log('Optional env vars:');
 		console.log('  AWS_REGION        Defaults to', region);
 		console.log('  DRY_RUN           Set to "true" to simulate');
+		console.log('  DIRECTORY         Limit to a prefix inside the bucket');
 	}
 }
 
