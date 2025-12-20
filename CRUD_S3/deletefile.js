@@ -9,6 +9,7 @@ const {
 	ListObjectsV2Command,
 	DeleteObjectsCommand,
 } = require('@aws-sdk/client-s3');
+const fs = require('fs');
 
 // Region and credentials consistent with other scripts
 const region = process.env.AWS_REGION || 'us-east-1';
@@ -74,7 +75,7 @@ async function collectKeysInDateRange(bucket, start, end) {
 			scanned++;
 			const lm = obj.LastModified instanceof Date ? obj.LastModified : new Date(obj.LastModified);
 			if (!isNaN(lm.getTime()) && lm >= start && lm <= end) {
-				keysToDelete.push({ Key: obj.Key });
+				keysToDelete.push({ Key: obj.Key, LastModified: lm.toISOString() });
 			}
 		}
 
@@ -98,6 +99,12 @@ async function deleteInBatches(bucket, objects, dryRun) {
 	const BATCH_SIZE = 1000; // S3 deleteObjects max
 	let deleted = 0;
 	let errors = 0;
+	const logFile = path.resolve(__dirname, 'log.txt');
+	const logStream = dryRun ? null : fs.createWriteStream(logFile, { flags: 'a' });
+	if (!dryRun) {
+		logStream.write(`\n=== Deletion run at ${new Date().toISOString()} ===\n`);
+		logStream.write(`Bucket: ${bucket}\n`);
+	}
 
 	for (let i = 0; i < objects.length; i += BATCH_SIZE) {
 		const batch = objects.slice(i, i + BATCH_SIZE);
@@ -114,7 +121,7 @@ async function deleteInBatches(bucket, objects, dryRun) {
 		try {
 			const resp = await s3.send(new DeleteObjectsCommand({
 				Bucket: bucket,
-				Delete: { Objects: batch, Quiet: true },
+				Delete: { Objects: batch.map(b => ({ Key: b.Key })), Quiet: true },
 			}));
 
 			const succeeded = (resp.Deleted || []).length;
@@ -125,10 +132,26 @@ async function deleteInBatches(bucket, objects, dryRun) {
 			if (failed > 0) {
 				console.warn('Some deletions failed:', resp.Errors);
 			}
+
+			// Write successful deletions to log with LastModified
+			if (succeeded > 0 && logStream) {
+				// Build a map for quick lookup of LastModified by Key in this batch
+				const meta = new Map(batch.map(b => [b.Key, b.LastModified]));
+				for (const d of resp.Deleted || []) {
+					const key = d.Key;
+					const lm = meta.get(key) || 'unknown-last-modified';
+					logStream.write(`${lm}\t${key}\n`);
+				}
+			}
 		} catch (err) {
 			errors += batch.length;
 			console.error('DeleteObjects batch failed:', err.message || err);
 		}
+	}
+
+	if (logStream) {
+		logStream.end();
+		console.log(`Deletion log written to: ${logFile}`);
 	}
 
 	return { deleted, errors };
@@ -144,7 +167,7 @@ async function main() {
 		const { deleted, errors } = await deleteInBatches(bucket, candidates, dryRun);
 		console.log('Summary:');
 		console.log(`  Matched: ${candidates.length}`);
-		console.log(`  Deleted: ${deleted}`);
+		// console.log(`  Deleted: ${deleted}`);
 		console.log(`  Errors:  ${errors}`);
 
 		if (dryRun) {
