@@ -16,3 +16,36 @@ Bucket: backup-bucket123321
 
 === Deletion run at 2025-12-20T10:20:38.042Z ===
 Bucket: backup-bucket123321
+
+=== Deletion preview at 2025-12-20T10:34:47.255Z ===
+Bucket: backup-bucket123321
+Prefix: trial1/
+Range: 2025-12-19T00:00:00.000Z -> 2025-12-20T18:29:59.999Z
+Candidates (3):
+2025-12-20T10:33:26.000Z	s3://backup-bucket123321/trial1/
+2025-12-20T10:33:45.000Z	s3://backup-bucket123321/trial1/‘LRS Daily Return dtd 03-12-2025 (1) (1).pdf
+2025-12-20T10:33:45.000Z	s3://backup-bucket123321/trial1/‘LRS Daily Return dtd 03-12-2025 (1).pdf
+
+=== Deletion preview at 2025-12-20T10:35:50.948Z ===
+Bucket: backup-bucket123321
+Prefix: trial1/
+Range: 2025-12-19T00:00:00.000Z -> 2025-12-20T18:29:59.999Z
+Candidates (3):
+2025-12-20T10:33:26.000Z	s3://backup-bucket123321/trial1/
+2025-12-20T10:33:45.000Z	s3://backup-bucket123321/trial1/‘LRS Daily Return dtd 03-12-2025 (1) (1).pdf
+2025-12-20T10:33:45.000Z	s3://backup-bucket123321/trial1/‘LRS Daily Return dtd 03-12-2025 (1).pdf
+
+=== Deletion run at 2025-12-20T10:36:03.768Z ===
+Bucket: backup-bucket123321
+
+=== Deletion preview at 2025-12-20T10:36:50.133Z ===
+Bucket: backup-bucket123321
+Prefix: (none)
+Range: 2025-12-19T00:00:00.000Z -> 2025-12-20T18:29:59.999Z
+Candidates (3):
+2025-12-20T10:33:14.000Z	s3://backup-bucket123321/‘LRS Daily Return dtd 03-12-2025 (1) (1).pdf
+2025-12-20T10:33:14.000Z	s3://backup-bucket123321/‘LRS Daily Return dtd 03-12-2025 (1).pdf
+2025-12-20T10:33:15.000Z	s3://backup-bucket123321/‘LRS Daily Return dtd 03-12-2025.pdf
+
+=== Deletion run at 2025-12-20T10:37:09.917Z ===
+Bucket: backup-bucket123321

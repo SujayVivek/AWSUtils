@@ -10,6 +10,7 @@ const {
 	DeleteObjectsCommand,
 } = require('@aws-sdk/client-s3');
 const fs = require('fs');
+const readline = require('readline');
 
 // Region and credentials consistent with other scripts
 const region = process.env.AWS_REGION || 'us-east-1';
@@ -27,6 +28,42 @@ function normalizePrefix(dir) {
 	p = p.replace(/^\/+/, '');
 	if (p && !p.endsWith('/')) p += '/';
 	return p || undefined;
+}
+
+function formatS3Uri(bucket, key) {
+	return `s3://${bucket}/${key}`;
+}
+
+function writeCandidatesLog(bucket, prefix, start, end, candidates) {
+	const logFile = path.resolve(__dirname, 'log.txt');
+	const ts = new Date().toISOString();
+	const lines = [];
+	lines.push(`\n=== Deletion preview at ${ts} ===`);
+	lines.push(`Bucket: ${bucket}`);
+	lines.push(`Prefix: ${prefix || '(none)'}`);
+	lines.push(`Range: ${start.toISOString()} -> ${end.toISOString()}`);
+	lines.push(`Candidates (${candidates.length}):`);
+	for (const c of candidates) {
+		lines.push(`${c.LastModified}\t${formatS3Uri(bucket, c.Key)}`);
+	}
+	fs.appendFileSync(logFile, lines.join('\n') + '\n');
+	return logFile;
+}
+
+function writeCandidatesCsv(bucket, candidates) {
+	const ts = new Date().toISOString().replace(/[:.]/g, '-');
+	const csvFile = path.resolve(__dirname, `candidates-${bucket}-${ts}.csv`);
+	const header = 's3_uri,uploaded_at\n';
+	const rows = candidates.map(c => `${formatS3Uri(bucket, c.Key)},${c.LastModified}`).join('\n');
+	fs.writeFileSync(csvFile, header + rows + '\n');
+	return csvFile;
+}
+
+async function promptYesConfirm(message) {
+	const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+	const answer = await new Promise(resolve => rl.question(message, resolve));
+	rl.close();
+	return String(answer).trim().toLowerCase() === 'yes';
 }
 
 function parseEnv() {
@@ -151,7 +188,7 @@ async function deleteInBatches(bucket, objects, dryRun) {
 				for (const d of resp.Deleted || []) {
 					const key = d.Key;
 					const lm = meta.get(key) || 'unknown-last-modified';
-					logStream.write(`${lm}\t${key}\n`);
+					logStream.write(`${lm}\t${formatS3Uri(bucket, key)}\n`);
 				}
 			}
 		} catch (err) {
@@ -174,16 +211,37 @@ async function main() {
 		console.log(`Region: ${region}. Bucket: ${bucket}. Prefix: ${prefix || '(none)'} . DryRun: ${dryRun ? 'ON' : 'OFF'}`);
 
 		const candidates = await collectKeysInDateRange(bucket, start, end, prefix);
-
-		const { deleted, errors } = await deleteInBatches(bucket, candidates, dryRun);
-		console.log('Summary:');
-		console.log(`  Matched: ${candidates.length}`);
-		// console.log(`  Deleted: ${deleted}`);
-		console.log(`  Errors:  ${errors}`);
+        
+		// Write preview to log and CSV
+		const logPath = writeCandidatesLog(bucket, prefix, start, end, candidates);
+		const csvPath = writeCandidatesCsv(bucket, candidates);
+		console.log(`Preview written to: ${logPath}`);
+		console.log(`CSV of candidates: ${csvPath}`);
 
 		if (dryRun) {
-			console.log('Dry run complete. No objects were actually deleted.');
+			console.log('DRY_RUN=true: Skipping deletion. This was a preview only.');
+			console.log('Summary:');
+			console.log(`  Matched: ${candidates.length}`);
+			console.log('  Deleted: 0');
+			console.log('  Errors:  0');
+			return;
 		}
+
+		const proceed = await promptYesConfirm(`Proceed to delete ${candidates.length} objects? Type "yes" to confirm: `);
+		if (!proceed) {
+			console.log('Deletion aborted by user.');
+			console.log('Summary:');
+			console.log(`  Matched: ${candidates.length}`);
+			console.log('  Deleted: 0');
+			console.log('  Errors:  0');
+			return;
+		}
+
+		const { deleted, errors } = await deleteInBatches(bucket, candidates, false);
+		console.log('Summary:');
+		console.log(`  Deleted: ${candidates.length}`);
+		// console.log(`  Deleted: ${deleted}`);
+		console.log(`  Errors:  ${errors}`);
 	} catch (err) {
 		console.error('Error:', err.message || err);
 		console.log('\nRequired env vars:');
