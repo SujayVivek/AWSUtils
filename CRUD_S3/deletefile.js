@@ -35,7 +35,9 @@ function formatS3Uri(bucket, key) {
 }
 
 function writeCandidatesLog(bucket, prefix, start, end, candidates) {
-	const logFile = path.resolve(__dirname, 'log.txt');
+	// Timestamped log file per run
+	const tsFile = new Date().toISOString().replace(/[:.]/g, '-');
+	const logFile = path.resolve(__dirname, `log-${bucket}-${tsFile}.txt`);
 	const ts = new Date().toISOString();
 	const lines = [];
 	lines.push(`\n=== Deletion preview at ${ts} ===`);
@@ -46,7 +48,7 @@ function writeCandidatesLog(bucket, prefix, start, end, candidates) {
 	for (const c of candidates) {
 		lines.push(`${c.LastModified}\t${formatS3Uri(bucket, c.Key)}`);
 	}
-	fs.appendFileSync(logFile, lines.join('\n') + '\n');
+	fs.writeFileSync(logFile, lines.join('\n') + '\n');
 	return logFile;
 }
 
@@ -138,7 +140,7 @@ async function collectKeysInDateRange(bucket, start, end, prefix) {
 	return keysToDelete;
 }
 
-async function deleteInBatches(bucket, objects, dryRun) {
+async function deleteInBatches(bucket, objects, dryRun, logFilePath) {
 	if (objects.length === 0) {
 		console.log('No objects to delete in the specified date range.');
 		return { deleted: 0, errors: 0 };
@@ -147,7 +149,8 @@ async function deleteInBatches(bucket, objects, dryRun) {
 	const BATCH_SIZE = 1000; // S3 deleteObjects max
 	let deleted = 0;
 	let errors = 0;
-	const logFile = path.resolve(__dirname, 'log.txt');
+	// Use the same timestamped log file as preview, or create one if not provided
+	const logFile = logFilePath || path.resolve(__dirname, `log-${bucket}-${new Date().toISOString().replace(/[:.]/g, '-')}.txt`);
 	const logStream = dryRun ? null : fs.createWriteStream(logFile, { flags: 'a' });
 	if (!dryRun) {
 		logStream.write(`\n=== Deletion run at ${new Date().toISOString()} ===\n`);
@@ -237,10 +240,9 @@ async function main() {
 			return;
 		}
 
-		const { deleted, errors } = await deleteInBatches(bucket, candidates, false);
+		const { deleted, errors } = await deleteInBatches(bucket, candidates, false, logPath);
 		console.log('Summary:');
-		console.log(`  Deleted: ${candidates.length}`);
-		// console.log(`  Deleted: ${deleted}`);
+		console.log(`  Deleted: ${deleted}`);
 		console.log(`  Errors:  ${errors}`);
 	} catch (err) {
 		console.error('Error:', err.message || err);
