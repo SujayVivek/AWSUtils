@@ -1,0 +1,62 @@
+1) Chunked Rules Repository
+DIRECTORY=Banking Regulations/India/
+Files: Deleted: 10440, Total Files: 274692
+
+Summary: 
+s3://chunked-rules-repository: 10440 objects
+s3://chunked-rules-repository/Banking Regulations: 10440 objects
+s3://chunked-rules-repository/Banking Regulations/India: 10440 objects
+s3://chunked-rules-repository/Banking Regulations/India/notifications: 292 objects
+s3://chunked-rules-repository/Banking Regulations/India/Notifications: 9598 objects
+s3://chunked-rules-repository/Banking Regulations/India/Notifications/NOV 2025: 9460 objects
+s3://chunked-rules-repository/Banking Regulations/India/Notifications/Update 032025: 138 objects
+s3://chunked-rules-repository/Banking Regulations/India/notifications/Updates 032025: 292 objects
+s3://chunked-rules-repository/Banking Regulations/India/RBI Press releases: 8 objects
+s3://chunked-rules-repository/Banking Regulations/India/RBI Press Releases: 542 objects
+
+
+DIRECTORY= Capital Market Regulations/India/
+Files: Deleted 25528, Total Files: 80144
+
+Summary: 
+s3://chunked-rules-repository: 25528 objects
+s3://chunked-rules-repository/Capital Market Regulations: 25528 objects
+s3://chunked-rules-repository/Capital Market Regulations/India: 25528 objects
+s3://chunked-rules-repository/Capital Market Regulations/India/Circulars: 50 objects
+s3://chunked-rules-repository/Capital Market Regulations/India/Circulars/Update 03.03.2025: 28 objects
+s3://chunked-rules-repository/Capital Market Regulations/India/Orders: 2258 objects
+s3://chunked-rules-repository/Capital Market Regulations/India/Orders Press releases: 22818 objects
+s3://chunked-rules-repository/Capital Market Regulations/India/regulations: 402 objects
+
+
+2) rules-repository-alpha
+DIRECTORY= Banking Regulations/India
+Files: Deleted: 5220, Total Files: 137756
+
+Summary: 
+s3://rules-repository-alpha: 5220 objects
+s3://rules-repository-alpha/Banking Regulations: 5220 objects
+s3://rules-repository-alpha/Banking Regulations/India: 5220 objects
+s3://rules-repository-alpha/Banking Regulations/India/notifications: 146 objects
+s3://rules-repository-alpha/Banking Regulations/India/Notifications: 4799 objects
+s3://rules-repository-alpha/Banking Regulations/India/Notifications/NOV 2025: 4730 objects
+s3://rules-repository-alpha/Banking Regulations/India/Notifications/Update 032025: 69 objects
+s3://rules-repository-alpha/Banking Regulations/India/notifications/Updates 032025: 146 objects
+s3://rules-repository-alpha/Banking Regulations/India/RBI Press releases: 4 objects
+s3://rules-repository-alpha/Banking Regulations/India/RBI Press Releases: 271 objects
+
+
+DIRECTORY= Capital Market Regulations/India/
+Files: Deleted 12764, Total Files: 42433
+
+Summary: 
+s3://rules-repository-alpha: 12764 objects
+s3://rules-repository-alpha/Capital Market Regulations: 12764 objects
+s3://rules-repository-alpha/Capital Market Regulations/India: 12764 objects
+s3://rules-repository-alpha/Capital Market Regulations/India/Circulars: 25 objects
+s3://rules-repository-alpha/Capital Market Regulations/India/Circulars/Update 03.03.2025: 14 objects
+s3://rules-repository-alpha/Capital Market Regulations/India/Orders: 1129 objects
+s3://rules-repository-alpha/Capital Market Regulations/India/Orders Press releases: 11409 objects
+s3://rules-repository-alpha/Capital Market Regulations/India/regulations: 201 objects
+
+

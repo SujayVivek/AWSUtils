@@ -4,7 +4,7 @@ const path = require('path');
 // Edit this path to point to the CSV you want to summarize
 // The CSV must have a header: s3_uri,uploaded_at
 // and rows like: s3://<bucket>/<key>,<ISO date>
-const CSV_PATH = path.resolve(__dirname, 'candidates-chunked-rules-repository-2025-12-20T15-11-18-159Z.csv');
+const CSV_PATH = path.resolve(__dirname, 'RulesrepoalphaBankregIndia.csv');
 
 function parseS3Uri(uri) {
   const m = String(uri).trim().match(/^s3:\/\/([^/]+)\/?(.*)$/);
